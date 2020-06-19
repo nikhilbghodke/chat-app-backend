@@ -30,7 +30,7 @@ var sendVerification= async function(to,msg){
     from: 'nikhilghodke12101990@gmail.com',
     to: to,
     subject: 'Verification to Join Chat App',
-    text: "<a href='http://chat-app-chat-app.apps.123.252.203.195.nip.io/verify/"+msg.id+"'>Link to be verified</a>"
+    text: "Click on below link to verify yourself \n http://chat-app-chat-app.apps.123.252.203.195.nip.io/verify/"+msg.id
   };
   const ans=await transporter.sendMail(mailOptions);
 }

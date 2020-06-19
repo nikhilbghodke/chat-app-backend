@@ -1,10 +1,12 @@
 const path = require('path');
 const express= require("express")
+const logger= require("pino")()
 const multer= require("multer")
 const User = require("../models/user.js")
 const Verification= require("../models/emailVerification.js")
 const auth=require("../middlewares/auth.js")
 const sendVerification = require("../utils/sendEmail").sendVerification
+
 
 const uploadDir= path.join(__dirname,"../../uploads")
 var app=express.Router()
@@ -50,13 +52,10 @@ app.post("/signup", async (req,res, next)=>{
     var user= new User(req.body)
     try{
         user=await user.save()
-        var verification= new Verification({
-            user:user._id
-        })
-        await verification.save()
-        await sendVerification(user.email,{
-            id:user._id
-        })
+
+        // await sendVerification(user.email,{
+        //     id:user._id
+        // })
     }
     catch(e){
         return next({
@@ -84,7 +83,7 @@ app.post("/login", async (req,res,next)=>{
      res.send({user,token})
     }
     catch(e){
-        console.log(e)
+        logger.error(e)
         return next({
             status: 404,
             message:e.message
@@ -145,7 +144,8 @@ app.patch("/users", auth ,async (req,res,next)=>{
         var user =req.user
         const keys= Object.keys(req.body)
         keys.forEach((key)=>{
-            user[key]=req.body[key]
+            if(req.body[key])
+                user[key]=req.body[key]
         })
         //console.log(user)
         user=await user.save()

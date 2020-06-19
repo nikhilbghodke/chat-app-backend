@@ -15,6 +15,19 @@ app.post("/rooms", auth,async (req,res,next)=>{
         room.owner=req.user._id
         room.members.push(req.user._id)
         await room.save()
+        var defaultChannels=["general","chill"]
+        for(i in defaultChannels){
+            var channel= new Channel({title:defaultChannels[i]})
+            channel.room=room._id
+            await channel.save()
+        }
+        console.log(req.user)
+        await req.body.invites.forEach(async (val)=>{
+            await sendEmail(val,{
+                sender:req.user.email,
+                roomName:room.title
+            })
+        })
         res.status(201).send(room)
     }
     catch(e){
@@ -104,13 +117,13 @@ app.post("/rooms/:title/leave", auth,async (req,res,next)=>{
 app.post("/rooms/:title/invite", roomowner, async (req,res,next)=>{
     try{
         var room= req.room
-        var to= req.user.email
+        var sender= req.user.email
         var roomName= room.title
         var sender=req.user.email
         room.invites= room.invites.concat(req.body)
         req.body.forEach(async (val)=>{
             await sendEmail(val,{
-                to,
+                sender,
                 roomName
             })
         })
@@ -161,11 +174,22 @@ app.delete("/rooms/:title", roomowner, async (req,res,next)=>{
 })
 app.patch("/rooms/:title", roomowner, async (req, res,next)=>{
     try{
+        var keys= Object.keys(req.body)
+        console.log(keys)
+        for(key in keys){
+            console.log(keys[key])
+            // if(keys[key]=="private")
+            //     continue
+            if(req.body[keys[key]]==null)
+                delete req.body[keys[key]]
+        }
         var room =await Room.findOne({
             title:req.params.title
         })
+        console.log(req.body)
         var keys=Object.keys(req.body)
         keys.forEach((key)=>{
+            
             room[key]=req.body[key]
         })
         await room.save()
@@ -191,7 +215,19 @@ app.get("/rooms/:title/members",roomMember ,async (req,res,next)=>{
         var isMember=room.members.includes(req.user._id)
         console.log(isMember)
         await room.populate('members').execPopulate()
-        res.send(room.members)
+        var members=[]
+        for(i in room.members){
+            members.push({
+                _id:room.members[i]._id,
+                username:room.members[i].username,
+                status:room.members[i].status,
+                avatar:room.members[i].avatar,
+                lastSeen:room.members[i].lastSeen,
+                moderator:room.moderators.includes(room.members[i]._id),
+                score:room.members[i].score
+            })
+        }
+        res.send(members)
     }
     catch(e){
         return next({
@@ -274,10 +310,12 @@ app.get("/allMessages/:title", roomMember, async (req,res,next)=>{
     for (var i=0; i<channels.length;i++){
         var channel= channels[i]
        console.log(channel._id)
-       var messages=await Channel.getAllMessages(channel._id)
-
+       var messages=await Channel.getAllMessages(channel._id,req.user)
        console.log(messages)
-       msg[channel.title]=messages
+       msg[channel.title]={
+           messages,
+           description:channel.description
+       }
     }
     res.send(msg)
     }
@@ -289,6 +327,25 @@ app.get("/allMessages/:title", roomMember, async (req,res,next)=>{
     }
 })
 
-
+app.post("/room/:title/moderator/:username", roomowner, async (req, res, next)=>{
+    try{
+        var user =await User.findOne({
+            username:req.params.username
+        })
+        if(!user)
+            return next({
+                status:404,
+                message:"No such user found"
+            })
+        req.room.moderators.push(user._id)
+        await req.room.save()
+        res.send(req.room)
+    }
+    catch(e){
+        next({
+            message:e.message
+        })
+    }
+})
 
 module.exports=app
