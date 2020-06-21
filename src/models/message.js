@@ -11,6 +11,7 @@ const messageSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Channel',
         required:true,
+        index:true,
     },
     content: {
         type:String,
