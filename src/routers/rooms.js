@@ -97,15 +97,7 @@ app.post("/rooms/:title/leave", auth,async (req,res,next)=>{
     {
         return next({
             status:404,
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-            message:"no such room"
-=======
-            message:"no Such room"
->>>>>>> Stashed changes
-=======
-            message:"no Such room"
->>>>>>> Stashed changes
+            message:"No such room"
         })
     }
     room.members= room.members.filter((val)=>{
