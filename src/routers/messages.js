@@ -25,19 +25,14 @@ app.post("/messages/:id", auth, async (req, res,next) => {
 })
 
 //get all messages in a channel
-app.get("/messages/:id", async (req, res,next) => {
+app.get("/allMessages/:title/:channel", roomMember,async (req, res,next) => {
     try {
-        var channelId = req.params.id
-        const messages = await Message.find({
-            channel: channelId
+        var channel= await Channel.findOne({
+            room:req.room._id,
+            title:req.params.channel
         })
-        if (!messages)
-            return next({
-                status: 200,
-                message: "No messages"
-            })
-        else
-            res.send(messages)
+        var messages=await Channel.getAllMessages(channel._id,req.user,req)
+        res.send(messages)
     } catch (e) {
         return next({
             message: e.message
