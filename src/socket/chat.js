@@ -95,11 +95,13 @@ io.on("connection",(socket)=>{
 			io.to(packet.room).emit("recieve",generateMessage(packet))
 		}
 		else{
+			var msg =await DirectMessage.saveMessage(socket.user._id,packet.to,packet.room, packet.msg, packet.type)
+			packet.id=msg._id
 			getUser(packet.to, packet.room).forEach((con)=>{
 				con.emit("recieve", generateMessage(packet))
 			})
 			socket.emit('recieve',generateMessage(packet))
-			await DirectMessage.saveMessage(socket.user._id,packet.to,packet.room, packet.msg, packet.type)
+			
 		}
 		callback()
 	})

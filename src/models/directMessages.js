@@ -44,7 +44,7 @@ messageSchema.statics.saveMessage= async function(userId,toUsername,roomTitle,co
         room:room._id,
         type
     })
-    await message.save()
+    return await message.save()
 }
 
 const DirectMessage = mongoose.model('DirectMessage', messageSchema);
